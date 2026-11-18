@@ -172,9 +172,49 @@ async function updateWorkout(req, res) {
   return res.status(200).json({ ...workout, sets: workoutSets });
 }
 
+async function deleteWorkout(req, res) {
+  const supabase = createUserClient(req.token);
+
+  const { data: workout, error: findError } = await supabase
+    .from("workouts")
+    .select("id")
+    .eq("id", req.params.id)
+    .eq("user_id", req.user.id)
+    .maybeSingle();
+
+  if (findError) {
+    return res.status(400).json({ error: findError.message });
+  }
+
+  if (!workout) {
+    return res.status(404).json({ error: "Workout not found" });
+  }
+
+  const { error: deleteSetsError } = await supabase
+    .from("workout_sets")
+    .delete()
+    .eq("workout_id", workout.id);
+
+  if (deleteSetsError) {
+    return res.status(400).json({ error: deleteSetsError.message });
+  }
+
+  const { error: deleteWorkoutError } = await supabase
+    .from("workouts")
+    .delete()
+    .eq("id", workout.id);
+
+  if (deleteWorkoutError) {
+    return res.status(400).json({ error: deleteWorkoutError.message });
+  }
+
+  return res.status(204).send();
+}
+
 module.exports = {
   createWorkout,
   getWorkouts,
   getWorkoutById,
   updateWorkout,
+  deleteWorkout,
 };
