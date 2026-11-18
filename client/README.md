@@ -527,3 +527,61 @@ invalid IDs, configuration/auth errors, not-found, cancellation, accessible tabl
 and protected-route behavior. Live verification still needs the team's credentials,
 configured API/backend/database, and owned workouts with enough history for a
 comparison. No backend/database/Supabase settings or dependencies are changed.
+
+## Shared backend API client (Issue #20)
+
+`src/lib/api.ts` is the single backend transport module. Its existing location is
+retained to avoid import churn. Workouts, creation/detail/edit/delete, exercises,
+calendar, and detailed stats all use its typed `apiGet`, `apiPost`, `apiPut`, or
+`apiDelete` wrappers around `apiRequest`. Supabase Auth calls remain SDK calls,
+separate from backend transport.
+
+The base URL is read from `VITE_API_URL`, with no runtime deployment-specific
+fallback. A backend path prefix such as `/api` is supported. Base URLs must be
+HTTP(S), without credentials, query, or fragment. Request paths stay on that
+origin and within its path prefix. Redirects are not followed with bearer tokens.
+`.env.example` contains a local development example only; configure the actual
+backend in ignored `.env.local` and restart Vite.
+
+Pages get the current session from `AuthContext` and pass its `access_token` to
+their domain request functions. The client attaches that supplied token on each
+request as `Authorization: Bearer ...`; it does not capture a token at import time,
+persist it, or maintain its own auth session. Existing effects depend on token/user
+changes, cancel obsolete requests, and scope results to the current account. No
+service-role/secret keys are needed or sent by this client.
+
+### Responses and errors
+
+- JSON request bodies are used for POST/PUT, with no body for GET/DELETE.
+- Responses return `Promise<unknown>` deliberately: domain modules validate the
+  actual payload and return their typed models, rather than asserting unchecked
+  generic JSON types. A successful 204 returns `null` without reading a body.
+- `ApiError` has a safe Estonian message, optional HTTP `status`, and typed `kind`:
+  `authentication`, `configuration`, `http`, `network`, or `response`.
+- Missing tokens and HTTP 401 retain status 401 so existing login/expired-session
+  handling works. There is no automatic sign-out, auth refresh, or request retry;
+  those remain explicit application actions, preventing write replay.
+- Network/stream failures become safe network errors. Write failures warn that the
+  outcome may be unknown. HTTP bodies and native exceptions are not surfaced in
+  messages or logs. Invalid JSON has a distinct response error.
+- `AbortSignal` is forwarded and checked before fetch, after fetch, and after JSON
+  parsing. Cancellation retains the original abort reason and is never converted
+  into an ordinary network error or a late successful result.
+
+Existing UI state flows, duplicate-submit guards, domain parsing/ownership checks,
+and stale-response protection are retained. No feature API contracts are changed.
+
+Run the direct transport tests or the full suite with existing dependencies:
+
+```sh
+node --test tests/api.test.mjs
+npx tsc --noEmit
+npm run build
+node --test tests/api.test.mjs tests/login.test.mjs tests/register.test.mjs tests/routes.test.mjs tests/workouts.test.mjs tests/new-workout.test.mjs tests/workout-detail.test.mjs tests/exercises.test.mjs tests/calendar.test.mjs tests/stats-detail.test.mjs
+```
+
+Direct tests cover current-token attachment, methods and bodies, configured path
+prefixes, unsafe URL rejection, HTTP/network/JSON failures, 204, unserializable
+requests, and early/in-flight/late cancellation. No backend access or real tokens
+are required. Live end-to-end verification still needs the team's configured API,
+Supabase public credentials, and authenticated test account.
