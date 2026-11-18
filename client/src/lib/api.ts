@@ -12,7 +12,7 @@ export interface ApiOptions {
 }
 
 // No token storage, global response cache, or automatic write retries.
-async function apiRequest(path: string, accessToken: string, method: 'GET' | 'POST', body: unknown,
+async function apiRequest(path: string, accessToken: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', body: unknown,
   options: ApiOptions = {}): Promise<unknown> {
   if (!accessToken) throw new ApiError('Sisselogimine on vajalik.', 401)
   const baseUrl = options.baseUrl ?? import.meta.env.VITE_API_URL?.trim()
@@ -30,9 +30,9 @@ async function apiRequest(path: string, accessToken: string, method: 'GET' | 'PO
     method,
     headers: {
       Authorization: `Bearer ${accessToken}`, Accept: 'application/json',
-      ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
+      ...(method === 'POST' || method === 'PUT' ? { 'Content-Type': 'application/json' } : {}),
     },
-    body: method === 'POST' ? JSON.stringify(body) : undefined,
+    body: method === 'POST' || method === 'PUT' ? JSON.stringify(body) : undefined,
     signal: options.signal,
     cache: 'no-store',
     credentials: 'omit',
@@ -41,9 +41,12 @@ async function apiRequest(path: string, accessToken: string, method: 'GET' | 'PO
   if (!response.ok) {
     if (response.status === 401) throw new ApiError('Sessioon ei kehti või on aegunud. Logi uuesti sisse.', 401)
     if (response.status === 403) throw new ApiError('Sul puudub õigus seda toimingut teha.', 403)
-    throw new ApiError(method === 'POST' ? 'Treeningu salvestamine ebaõnnestus. Kontrolli sisestatud andmeid ja proovi uuesti.'
+    if (response.status === 404) throw new ApiError('Treeningut ei leitud.', 404)
+    throw new ApiError(method === 'POST' || method === 'PUT' ? 'Treeningu salvestamine ebaõnnestus. Kontrolli sisestatud andmeid ja proovi uuesti.'
+      : method === 'DELETE' ? 'Treeningu kustutamine ebaõnnestus. Proovi uuesti.'
       : 'Andmeid ei saanud laadida. Proovi uuesti.', response.status)
   }
+  if (response.status === 204) return null
   try {
     return await response.json()
   } catch {
@@ -57,4 +60,12 @@ export function apiGet(path: string, accessToken: string, options: ApiOptions = 
 
 export function apiPost(path: string, accessToken: string, body: unknown, options: ApiOptions = {}): Promise<unknown> {
   return apiRequest(path, accessToken, 'POST', body, options)
+}
+
+export function apiPut(path: string, accessToken: string, body: unknown, options: ApiOptions = {}): Promise<unknown> {
+  return apiRequest(path, accessToken, 'PUT', body, options)
+}
+
+export function apiDelete(path: string, accessToken: string, options: ApiOptions = {}): Promise<unknown> {
+  return apiRequest(path, accessToken, 'DELETE', undefined, options)
 }
