@@ -43,4 +43,21 @@ async function createWorkout(req, res) {
   return res.status(201).json({ ...workout, sets: workoutSets });
 }
 
-module.exports = { createWorkout };
+async function getWorkouts(req, res) {
+  const supabase = createUserClient(req.token);
+
+  const { data: workouts, error } = await supabase
+    .from("workouts")
+    .select("*, sets:workout_sets(*)")
+    .eq("user_id", req.user.id)
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  return res.status(200).json(workouts);
+}
+
+module.exports = { createWorkout, getWorkouts };
