@@ -4,6 +4,7 @@ const cors = require("cors");
 const workoutsRoutes = require("./routes/workouts.routes");
 const exercisesRoutes = require("./routes/exercises.routes");
 const statsRoutes = require("./routes/stats.routes");
+const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
@@ -17,5 +18,8 @@ app.get("/", (req, res) => {
 app.use("/workouts", workoutsRoutes);
 app.use("/exercises", exercisesRoutes);
 app.use("/stats", statsRoutes);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 module.exports = app;

@@ -1,5 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middleware/auth.middleware");
+const asyncHandler = require("../middleware/asyncHandler");
 const {
   createWorkout,
   getWorkouts,
@@ -10,12 +11,12 @@ const {
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(asyncHandler(authMiddleware));
 
-router.post("/", createWorkout);
-router.get("/", getWorkouts);
-router.get("/:id", getWorkoutById);
-router.put("/:id", updateWorkout);
-router.delete("/:id", deleteWorkout);
+router.post("/", asyncHandler(createWorkout));
+router.get("/", asyncHandler(getWorkouts));
+router.get("/:id", asyncHandler(getWorkoutById));
+router.put("/:id", asyncHandler(updateWorkout));
+router.delete("/:id", asyncHandler(deleteWorkout));
 
 module.exports = router;
