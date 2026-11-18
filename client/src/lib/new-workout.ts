@@ -1,6 +1,7 @@
-import { ApiError, apiGet, apiPost } from './api'
+import { ApiError, apiPost } from './api'
 import type { ApiOptions } from './api'
 import { validDate } from './workouts'
+import { fetchExercises } from './exercises'
 
 export interface ExerciseOption { id: string; name: string }
 export interface SetDraft { exerciseId: string; weight: string; reps: string }
@@ -54,20 +55,7 @@ export function workoutBody(draft: WorkoutDraft, exercises: ExerciseOption[]): C
 }
 
 export async function fetchExerciseOptions(userId: string, token: string, options?: ApiOptions): Promise<ExerciseOption[]> {
-  if (!userId) throw new ApiError('Sisselogimine on vajalik.', 401)
-  const payload = await apiGet('/exercises', token, options)
-  if (!Array.isArray(payload)) throw new ApiError('Server tagastas ootamatud harjutuste andmed.')
-  const ids = new Set<string>()
-  return payload.map((item: unknown) => {
-    if (!item || typeof item !== 'object') throw new ApiError('Server tagastas ootamatud harjutuste andmed.')
-    const row = item as Record<string, unknown>
-    if (typeof row.id !== 'string' || !row.id || ids.has(row.id) || typeof row.name !== 'string' || !row.name.trim()
-      || (row.user_id !== null && row.user_id !== userId)) {
-      throw new ApiError('Server tagastas ootamatud harjutuste andmed.')
-    }
-    ids.add(row.id)
-    return { id: row.id, name: row.name }
-  })
+  return (await fetchExercises(userId, token, options)).map(({ id, name }) => ({ id, name }))
 }
 
 export async function createWorkout(userId: string, token: string, body: CreateWorkoutBody, options?: ApiOptions): Promise<string> {

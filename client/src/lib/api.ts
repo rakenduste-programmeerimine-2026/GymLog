@@ -42,7 +42,7 @@ async function apiRequest(path: string, accessToken: string, method: 'GET' | 'PO
     if (response.status === 401) throw new ApiError('Sessioon ei kehti või on aegunud. Logi uuesti sisse.', 401)
     if (response.status === 403) throw new ApiError('Sul puudub õigus seda toimingut teha.', 403)
     if (response.status === 404) throw new ApiError('Treeningut ei leitud.', 404)
-    throw new ApiError(method === 'POST' || method === 'PUT' ? 'Treeningu salvestamine ebaõnnestus. Kontrolli sisestatud andmeid ja proovi uuesti.'
+    throw new ApiError(method === 'POST' || method === 'PUT' ? 'Salvestamine ebaõnnestus. Kontrolli sisestatud andmeid ja proovi uuesti.'
       : method === 'DELETE' ? 'Treeningu kustutamine ebaõnnestus. Proovi uuesti.'
       : 'Andmeid ei saanud laadida. Proovi uuesti.', response.status)
   }

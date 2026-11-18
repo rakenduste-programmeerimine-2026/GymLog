@@ -162,7 +162,7 @@ configuration never grants access; public auth forms retain their setup message.
 Registration remains visible after automatic sign-in until the user continues,
 preserving Issue #22's confirmation/success feedback.
 
-The exercises and statistics routes remain clearly labeled placeholders.
+The statistics routes remain clearly labeled placeholders.
 `/workouts` displays the list and `/workouts/:id` the detail page. Frontend route guards
 are a UX measure: backend authorization and database policies remain responsible
 for protecting actual data.
@@ -347,3 +347,57 @@ locking, stale request cancellation, and localized/accessibly labeled markup.
 Live read/edit/delete still need the team's credentials, running backend/database,
 and a team-approved test workout. No backend, database, or Supabase settings are
 changed, and no features from Issues #27–#29 are included.
+
+## Exercises page (Issue #27)
+
+Protected `/exercises` lists global/shared exercises and the signed-in user's
+personal exercises using authenticated `GET /exercises`. Cards have explicit
+"Ühine harjutus" / "Minu harjutus" labels, distinct badges, and a category or
+"Määramata". Empty lists, loading, failed requests, and expired sessions have
+separate Estonian feedback and appropriate retry/login actions.
+
+The committed backend controller/routes and backend schema documentation were
+inspected read-only. Documented fields are `id`, `name`, `category`, and `user_id`;
+shared rows use `user_id: null`. No SQL schema/migrations are committed in this
+repository. The existing controller accepts required `name` and optional `category`:
+
+```text
+POST /exercises
+{ name, category? }
+```
+
+The form trims the required name and optional free-text category, omitting category
+when empty. It never sends `user_id`; the backend assigns the authenticated user's
+ID. No new category enumeration or database constraint is invented by the frontend.
+A confirmed personal exercise response clears the form, shows success feedback,
+and triggers a fresh GET. If that reload fails, the saved feedback remains visible
+alongside the list's retry message. No record is inserted optimistically.
+
+`src/lib/exercises.ts` contains typed parsing, loading, validation, creation, and
+request cancellation. The workout form's exercise dropdown reuses its visibility
+checks. Responses containing other users' private exercises, absent ownership,
+duplicate IDs, or malformed fields are rejected rather than displayed. Frontend
+checks do not replace backend authorization or RLS.
+
+Creation has a synchronous in-flight guard; fields and navigation are disabled
+while saving. Errors retain the entered values, and writes are never automatically
+retried. Network errors explain that the outcome can be uncertain and ask the user
+to check the list first. Missing API configuration uses the existing setup message.
+Requests are aborted/ignored on unmount or session changes, and cached state is
+scoped to the current account/token. Tokens and raw backend errors are not displayed.
+
+Run all checks using existing dependencies only:
+
+```sh
+npx tsc --noEmit
+npm run build
+node --test tests/login.test.mjs tests/register.test.mjs tests/routes.test.mjs tests/workouts.test.mjs tests/new-workout.test.mjs tests/workout-detail.test.mjs tests/exercises.test.mjs
+```
+
+Mocked tests cover shared/personal visibility, ownership rejection, required name,
+optional category, bearer GET/POST payloads, refresh after creation, duplicate
+submission prevention, safe creation errors, expired sessions, cancellation, and
+accessible form markup. Live verification still requires the team's Supabase URL
+and public key, authenticated test user, API URL, running backend/database, and
+confirmation of any database category constraints not committed here. Backend,
+database, RLS, and Supabase settings are unchanged. No statistics UI is implemented.

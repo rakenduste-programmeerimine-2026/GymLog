@@ -6,6 +6,7 @@ import ProtectedPlaceholderPage from './pages/ProtectedPlaceholderPage'
 import WorkoutsPage from './pages/WorkoutsPage'
 import NewWorkoutPage from './pages/NewWorkoutPage'
 import WorkoutDetailPage from './pages/WorkoutDetailPage'
+import ExercisesPage from './pages/ExercisesPage'
 import ProtectedNavigation from './components/ProtectedNavigation'
 import Header from './components/Header'
 import RouteLink from './components/RouteLink'
@@ -72,6 +73,8 @@ export function AppRoutes({ path, navigate }: { path: string; navigate: Navigate
             deleted={location.searchParams.get('deleted') === '1'} />
         ) : detailMatch ? (
           <WorkoutDetailPage key={`${user?.id}:${workoutId}`} id={workoutId} navigate={navigate} />
+        ) : pathname === '/exercises' ? (
+          <ExercisesPage key={user?.id} navigate={navigate} />
         ) : (
           <ProtectedPlaceholderPage path={route.path} navigate={navigate} />
         )
