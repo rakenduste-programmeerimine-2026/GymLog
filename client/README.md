@@ -162,7 +162,7 @@ configuration never grants access; public auth forms retain their setup message.
 Registration remains visible after automatic sign-in until the user continues,
 preserving Issue #22's confirmation/success feedback.
 
-The statistics routes remain clearly labeled placeholders.
+`/stats` displays the activity calendar; unimplemented nested statistics routes remain placeholders.
 `/workouts` displays the list and `/workouts/:id` the detail page. Frontend route guards
 are a UX measure: backend authorization and database policies remain responsible
 for protecting actual data.
@@ -401,3 +401,60 @@ accessible form markup. Live verification still requires the team's Supabase URL
 and public key, authenticated test user, API URL, running backend/database, and
 confirmation of any database category constraints not committed here. Backend,
 database, RLS, and Supabase settings are unchanged. No statistics UI is implemented.
+
+## Workout activity calendar (Issue #28)
+
+Protected `/stats` displays an Estonian Monday-first monthly calendar following the
+existing calendar wireframe's structure and dark Neon Lime direction. Previous/next
+month buttons cross year boundaries, and "Käesolevasse kuusse" returns to the local
+current month. The current month is labeled; today's date is underlined and has
+`aria-current="date"`. Today uses the browser's local calendar date and refreshes
+once a minute while the page is mounted. Date-only calculations/formatting use UTC
+to avoid shifting workout dates across timezone or daylight-saving boundaries.
+
+The committed `stats.routes.js` and `getCalendarStats` controller were inspected
+read-only. The actual contract is:
+
+```text
+GET /stats/calendar?month=YYYY-MM
+{ "YYYY-MM-01": false, "YYYY-MM-02": true, ... }
+```
+
+Every day of the requested month is present with a boolean indicating whether
+at least one workout exists. The frontend rejects missing dates, extra/wrong-month
+dates, and non-boolean values. It does not invent workout IDs, counts, user IDs,
+or advanced-statistics fields. Unlike the broader wireframe, this issue displays
+only selected-day activity feedback; the API does not provide per-day workout lists.
+
+Activity is shown by a visible dot as well as a full accessible label; selection
+has a border and `aria-pressed`. Weekday headers have full Estonian names, month
+changes are announced, and controls have visible focus and keyboard support.
+At 320px, the calendar uses seven equal columns and 44px-high day controls, with
+small side padding to preserve approximately 44px-wide touch targets.
+
+Loading and errors do not display old markers or imply an empty history. Empty
+months still render a usable calendar. Failures offer retry, expired sessions
+offer login, and missing API configuration uses the existing setup message.
+Supported month navigation is bounded to years 1000–9999.
+
+Requests use the existing authenticated GET helper and current Supabase bearer
+token. Results are scoped to user, token, and requested month. Requests are aborted
+and late results ignored after account/month changes or unmount. This aggregate
+response contains no ownership field: user isolation relies on the backend's
+existing `user_id = req.user.id` filter and token validation, not fabricated
+client-side ownership metadata. No data is shared through an application cache.
+
+Checks using existing dependencies and mocked responses:
+
+```sh
+npx tsc --noEmit
+npm run build
+node --test tests/login.test.mjs tests/register.test.mjs tests/routes.test.mjs tests/workouts.test.mjs tests/new-workout.test.mjs tests/workout-detail.test.mjs tests/exercises.test.mjs tests/calendar.test.mjs
+```
+
+Calendar tests cover query/header correctness, response validation, empty/error/
+expired-session states, cancellation, local today, month/year transitions, leap
+years and century rules, week alignment, and accessible activity/today markers.
+Live verification still requires the team's Supabase credentials, API URL,
+authenticated test account, and configured backend/database. No dependencies or
+backend/database/Supabase settings are changed. Issue #29 is not implemented.
