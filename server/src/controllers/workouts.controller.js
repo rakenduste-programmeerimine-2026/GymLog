@@ -81,4 +81,100 @@ async function getWorkoutById(req, res) {
   return res.status(200).json(workout);
 }
 
-module.exports = { createWorkout, getWorkouts, getWorkoutById };
+async function updateWorkout(req, res) {
+  const { date, name, sets } = req.body;
+  const supabase = createUserClient(req.token);
+
+  const updateFields = {};
+  if (date !== undefined) updateFields.date = date;
+  if (name !== undefined) updateFields.name = name;
+
+  let workout;
+
+  if (Object.keys(updateFields).length > 0) {
+    const { data, error } = await supabase
+      .from("workouts")
+      .update(updateFields)
+      .eq("id", req.params.id)
+      .eq("user_id", req.user.id)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    workout = data;
+  } else {
+    const { data, error } = await supabase
+      .from("workouts")
+      .select()
+      .eq("id", req.params.id)
+      .eq("user_id", req.user.id)
+      .maybeSingle();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    workout = data;
+  }
+
+  if (!workout) {
+    return res.status(404).json({ error: "Workout not found" });
+  }
+
+  let workoutSets;
+
+  if (Array.isArray(sets)) {
+    const { error: deleteError } = await supabase
+      .from("workout_sets")
+      .delete()
+      .eq("workout_id", workout.id);
+
+    if (deleteError) {
+      return res.status(400).json({ error: deleteError.message });
+    }
+
+    if (sets.length > 0) {
+      const setsToInsert = sets.map((set, index) => ({
+        workout_id: workout.id,
+        exercise_id: set.exercise_id,
+        exercise_name: set.exercise_name,
+        weight: set.weight,
+        reps: set.reps,
+        set_order: index + 1,
+      }));
+
+      const { data, error } = await supabase
+        .from("workout_sets")
+        .insert(setsToInsert)
+        .select();
+
+      if (error) {
+        return res.status(400).json({ error: error.message });
+      }
+      workoutSets = data;
+    } else {
+      workoutSets = [];
+    }
+  } else {
+    const { data, error } = await supabase
+      .from("workout_sets")
+      .select()
+      .eq("workout_id", workout.id)
+      .order("set_order");
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    workoutSets = data;
+  }
+
+  return res.status(200).json({ ...workout, sets: workoutSets });
+}
+
+module.exports = {
+  createWorkout,
+  getWorkouts,
+  getWorkoutById,
+  updateWorkout,
+};
