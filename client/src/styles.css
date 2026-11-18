@@ -131,3 +131,26 @@ p {
 .login-registration {
   margin-top: 1.5rem;
 }
+
+.auth-navigation {
+  min-height: 44px;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: #c6ff00;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-navigation:focus-visible,
+.login-notice:focus-visible {
+  outline: 3px solid #c6ff00;
+  outline-offset: 3px;
+}
+
+.auth-navigation:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

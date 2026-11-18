@@ -6,7 +6,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 const server = await createServer({
-  server: { middlewareMode: true },
+  server: { middlewareMode: true, hmr: false, ws: false },
   appType: 'custom',
 })
 after(() => server.close())
@@ -48,11 +48,11 @@ test('unconfigured login renders accessible fields and disables submission', asy
       configurationError: 'Autentimine pole seadistatud.',
       signOut: async () => {},
     },
-  }, createElement(LoginPage)))
+  }, createElement(LoginPage, { onRegister: () => {} })))
   assert.match(html, /for="login-email"/)
   assert.match(html, /for="login-password"/)
   assert.match(html, /autoComplete="current-password"/)
   assert.match(html, /Autentimine pole seadistatud/)
   assert.match(html, /type="submit" disabled/)
-  assert.match(html, /Registreerimisleht pole veel saadaval/)
+  assert.match(html, /Loo konto/)
 })
