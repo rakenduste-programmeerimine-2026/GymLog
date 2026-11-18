@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import ProtectedNavigation from '../components/ProtectedNavigation'
+import RouteLink from '../components/RouteLink'
 import { useAuth } from '../context/AuthContext'
 import { formatWorkoutDate, startWorkoutsRequest } from '../lib/workouts'
 import type { WorkoutsState } from '../lib/workouts'
@@ -26,7 +27,7 @@ export function WorkoutsContent({ state, onRetry, onLogin }: {
     )
   }
   if (state.workouts.length === 0) {
-    return <p role="status">Sul pole veel salvestatud treeninguid. Uue treeningu lisamise vorm pole veel saadaval.</p>
+    return <p role="status">Sul pole veel salvestatud treeninguid. Alusta nupust „Lisa treening”.</p>
   }
   return (
     <>
@@ -44,7 +45,7 @@ export function WorkoutsContent({ state, onRetry, onLogin }: {
   )
 }
 
-export default function WorkoutsPage({ navigate }: { navigate: Navigate }) {
+export default function WorkoutsPage({ navigate, createdId = null }: { navigate: Navigate; createdId?: string | null }) {
   const { user, session, signOut } = useAuth()
   const userId = user?.id ?? ''
   const token = session?.access_token ?? ''
@@ -79,6 +80,10 @@ export default function WorkoutsPage({ navigate }: { navigate: Navigate }) {
       <ProtectedNavigation navigate={navigate} current="/workouts" />
       <main aria-labelledby="workouts-title">
         <h1 id="workouts-title">Minu treeningud</h1>
+        <RouteLink href="/workouts/new" navigate={navigate}>+ Lisa treening</RouteLink>
+        {state.status === 'success' && state.workouts.some((workout) => workout.id === createdId) && (
+          <p className="login-notice" role="status">Treening salvestatud.</p>
+        )}
         <WorkoutsContent state={state} onRetry={() => { setResult(null); setAttempt((value) => value + 1) }}
           onLogin={() => { void loginAgain() }} />
       </main>

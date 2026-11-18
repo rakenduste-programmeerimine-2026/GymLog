@@ -194,7 +194,7 @@ Use your actual backend address outside local development. This is separate from
 `VITE_SUPABASE_URL`. Missing/invalid API configuration produces a useful error;
 no demo workouts or anonymous request is substituted.
 
-`src/lib/api.ts` provides a small authenticated GET helper. It sends the current
+`src/lib/api.ts` provides small authenticated GET/POST helpers. They send the current
 Supabase access token only in the `Authorization: Bearer` header, does not cache
 responses, and does not follow redirects. This is not a complete API client for
 Issue #20. Tokens are never placed in URLs, logs, or persistent application state.
@@ -215,7 +215,7 @@ results are never shown while the next user's request is loading.
 
 No detail view is implemented. Cards explicitly state that details are not yet
 available instead of linking to a placeholder as though it were functional.
-No new-workout form or sample production data is included.
+No sample production data is included. The new-workout form is described below.
 
 Run the full frontend checks without backend access or credentials:
 
@@ -230,3 +230,63 @@ ownership rejection, malformed payloads, HTTP/network failures, cancellation,
 and rendered feedback. Live verification still needs the team's Supabase URL and
 public key, a test account, and a running authorized backend with its database
 configured. No backend or database setup is changed by this issue.
+
+## New workout form (Issue #25)
+
+Use "+ Lisa treening" on `/workouts` to open protected `/workouts/new`. The mobile
+form requires a name, valid date, and at least one exercise set. It uses the same
+auth/session checks, API base URL, bearer token, and dark Neon Lime styling as
+the workouts list. No new dependencies are required.
+
+### Inspected backend contract
+
+`server/src/controllers/workouts.controller.js` requires a non-empty `sets` array;
+a name/date-only request would fail. The frontend therefore sends:
+
+```text
+POST /workouts
+{ name, date, sets: [{ exercise_id, exercise_name, weight, reps }, ...] }
+```
+
+Exercise choices come from authenticated `GET /exercises`, accepting only global
+(`user_id: null`) or current-user records. The selected ID and its returned name
+are used together. No fabricated exercise IDs, demo data, or database changes are
+used. If no exercises exist, the form explains the prerequisite and disables save.
+This does not implement the exercise management page.
+
+The name is trimmed; date is a valid ISO calendar date. Every set requires a
+selected exercise, non-negative finite weight in kg (including zero), and positive
+integer repetitions. "Lisa seeria" adds another set, which may use another
+exercise. Required-field messages are in Estonian and focus moves to the first
+invalid field.
+
+### Submission and verification
+
+The existing API helper now supports JSON POST without automatic retries. During
+save, fields and in-app navigation are disabled. A synchronous guard prevents
+concurrent requests, and a successful form cannot submit a second time. After a
+confirmed response belonging to the current user, navigation replaces the form
+with `/workouts?created=<id>`. The remounted list makes a fresh GET and displays
+"Treening salvestatud" when that record is present. No workout is inserted into
+the list optimistically.
+
+API configuration, validation responses, expired sessions, and network errors
+produce safe feedback while retaining entered data. Expired sessions offer a
+return to login. A network failure can leave the write outcome unknown, so its
+message asks the user to check the list before retrying. This frontend prevents
+duplicate in-flight submissions, but cannot provide server-side idempotency.
+
+Run all checks without credentials/backend access:
+
+```sh
+npx tsc --noEmit
+npm run build
+node --test tests/login.test.mjs tests/register.test.mjs tests/routes.test.mjs tests/workouts.test.mjs tests/new-workout.test.mjs
+```
+
+New mocked tests cover required fields and calendar validation, numeric sets,
+request shape and bearer headers, successful POST followed by fresh GET,
+duplicate-submit prevention, explicit retry after failure, missing configuration,
+expired sessions, exercise ownership, and form markup. Live verification still
+requires the team's Supabase credentials, test user, running backend/database,
+and at least one visible exercise. Details, editing, and deletion are not included.

@@ -67,6 +67,7 @@ p {
 }
 
 .login-field input,
+.login-field select,
 .login-submit {
   width: 100%;
   min-height: 48px;
@@ -76,13 +77,15 @@ p {
   font: inherit;
 }
 
-.login-field input {
+.login-field input,
+.login-field select {
   min-width: 0;
   color: #f2f5ed;
   background: #1b2019;
 }
 
-.login-field input[aria-invalid="true"] {
+.login-field input[aria-invalid="true"],
+.login-field select[aria-invalid="true"] {
   border-color: #ffb4ab;
 }
 
@@ -105,6 +108,7 @@ p {
 }
 
 .login-field input:focus-visible,
+.login-field select:focus-visible,
 .login-submit:focus-visible,
 .login-error:focus-visible {
   outline: 3px solid #c6ff00;
@@ -200,4 +204,35 @@ p {
 
 .workout-detail-note {
   margin-top: 0.75rem;
+}
+
+.workout-form-fields {
+  border: 0;
+  margin: 1rem 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.workout-set {
+  min-width: 0;
+  margin: 1rem 0;
+}
+
+.workout-set legend {
+  padding-inline: 0.5rem;
+  font-weight: 700;
+}
+
+.workout-form-fields:disabled {
+  opacity: 0.65;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
