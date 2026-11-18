@@ -1,14 +1,17 @@
 import HomePage from './pages/HomePage'
+import LoginPage from './pages/LoginPage'
 import { useAuth } from './context/AuthContext'
 
 export default function App() {
-  const { configurationError, error } = useAuth()
+  const { user, error } = useAuth()
+
+  if (!user) return <LoginPage />
 
   return (
     <>
       <HomePage />
-      {(configurationError || error) && (
-        <p className="app" role="status">{configurationError ?? error}</p>
+      {error && (
+        <p className="app" role="status">{error}</p>
       )}
     </>
   )
