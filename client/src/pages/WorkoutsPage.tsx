@@ -8,10 +8,11 @@ import type { WorkoutsState } from '../lib/workouts'
 import { authPath } from '../lib/routes'
 import type { Navigate } from '../lib/navigation'
 
-export function WorkoutsContent({ state, onRetry, onLogin }: {
+export function WorkoutsContent({ state, onRetry, onLogin, navigate }: {
   state: WorkoutsState
   onRetry: () => void
   onLogin: () => void
+  navigate: Navigate
 }) {
   if (state.status === 'loading') return <p role="status">Laadin treeninguid…</p>
   if (state.status === 'error' || state.status === 'unauthenticated') {
@@ -37,7 +38,7 @@ export function WorkoutsContent({ state, onRetry, onLogin }: {
           <li className="workout-card" key={workout.id}>
             <h2>{workout.name}</h2>
             <time dateTime={workout.date}>{formatWorkoutDate(workout.date)}</time>
-            <p className="workout-detail-note">Treeningu detailvaade pole veel saadaval.</p>
+            <RouteLink href={`/workouts/${encodeURIComponent(workout.id)}`} navigate={navigate}>Vaata treeningut →</RouteLink>
           </li>
         ))}
       </ul>
@@ -45,7 +46,9 @@ export function WorkoutsContent({ state, onRetry, onLogin }: {
   )
 }
 
-export default function WorkoutsPage({ navigate, createdId = null }: { navigate: Navigate; createdId?: string | null }) {
+export default function WorkoutsPage({ navigate, createdId = null, deleted = false }: {
+  navigate: Navigate; createdId?: string | null; deleted?: boolean
+}) {
   const { user, session, signOut } = useAuth()
   const userId = user?.id ?? ''
   const token = session?.access_token ?? ''
@@ -81,11 +84,12 @@ export default function WorkoutsPage({ navigate, createdId = null }: { navigate:
       <main aria-labelledby="workouts-title">
         <h1 id="workouts-title">Minu treeningud</h1>
         <RouteLink href="/workouts/new" navigate={navigate}>+ Lisa treening</RouteLink>
+        {deleted && state.status === 'success' && <p className="login-notice" role="status">Treening kustutatud.</p>}
         {state.status === 'success' && state.workouts.some((workout) => workout.id === createdId) && (
           <p className="login-notice" role="status">Treening salvestatud.</p>
         )}
         <WorkoutsContent state={state} onRetry={() => { setResult(null); setAttempt((value) => value + 1) }}
-          onLogin={() => { void loginAgain() }} />
+          onLogin={() => { void loginAgain() }} navigate={navigate} />
       </main>
     </div>
   )

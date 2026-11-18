@@ -162,8 +162,8 @@ configuration never grants access; public auth forms retain their setup message.
 Registration remains visible after automatic sign-in until the user continues,
 preserving Issue #22's confirmation/success feedback.
 
-The exercises, statistics, and nested workout-detail routes remain clearly labeled
-placeholders. `/workouts` now displays the list described below. Frontend route guards
+The exercises and statistics routes remain clearly labeled placeholders.
+`/workouts` displays the list and `/workouts/:id` the detail page. Frontend route guards
 are a UX measure: backend authorization and database policies remain responsible
 for protecting actual data.
 
@@ -213,8 +213,7 @@ sign-out followed by login with `/workouts` as the return destination. Requests
 are aborted/ignored on unmount, account changes, and token changes; previous-account
 results are never shown while the next user's request is loading.
 
-No detail view is implemented. Cards explicitly state that details are not yet
-available instead of linking to a placeholder as though it were functional.
+Cards link to the protected workout detail view described below.
 No sample production data is included. The new-workout form is described below.
 
 Run the full frontend checks without backend access or credentials:
@@ -289,4 +288,62 @@ request shape and bearer headers, successful POST followed by fresh GET,
 duplicate-submit prevention, explicit retry after failure, missing configuration,
 expired sessions, exercise ownership, and form markup. Live verification still
 requires the team's Supabase credentials, test user, running backend/database,
-and at least one visible exercise. Details, editing, and deletion are not included.
+and at least one visible exercise. Details, editing, and deletion are covered separately below.
+
+## Workout details, edit, and delete (Issue #26)
+
+"Vaata treeningut" opens protected `/workouts/:id`. The Estonian detail page shows
+the workout name/date and ordered exercise sets with weight in kg and repetitions.
+It includes loading, empty sets, not-found, invalid ID, safe network/API error,
+and expired-session feedback, plus a return to the list. Missing API configuration
+uses the existing setup message. No real data or authentication is simulated.
+
+The existing backend routes/controllers were inspected before implementation:
+
+- `GET /workouts/:id`: returns the owned workout with a `sets` array, or 404.
+- `PUT /workouts/:id`: accepts name/date and optional replacement sets, using
+  `exercise_id`, `exercise_name`, `weight`, and `reps`; returns the updated detail.
+- `DELETE /workouts/:id`: deletes associated sets and the workout, returning 204
+  with no JSON body. The authenticated API helper now supports PUT/DELETE and 204.
+
+The editor changes the name, date, and each existing set's weight/repetitions.
+Exercise identities and order are preserved. Required-field/date/numeric checks
+reuse the new-workout validation. It also handles workouts with no sets, as PUT
+permits an empty array. Exercise replacement or adding/removing sets is not part
+of this editor.
+
+Delete uses an explicit Estonian browser confirmation before sending a request.
+Save/delete share a synchronous lock, controls are disabled while pending, and
+neither operation retries automatically. After save, the confirmed returned
+detail is rendered; after deletion, the list is remounted and fetched again.
+The list shows deletion feedback once its reload succeeds.
+
+Returned workout ownership, requested ID, each set's workout ID, and field types
+are checked before displaying data. Malformed/cross-user responses are rejected
+as a whole. IDs are treated as opaque alphanumeric/hyphen/underscore identifiers
+with a bounded length; path/query injection is rejected before fetching. These
+frontend checks supplement, rather than replace, backend authorization and RLS.
+Read requests are cancelled/ignored on navigation, account, or token changes;
+write results are not applied after unmount or token changes.
+
+The backend's replacement-set update is not transactional: failures can occur
+after some changes have been applied. After a failed/uncertain write the UI offers
+reloading the actual detail before another attempt, instead of showing an optimistic
+success or automatically resubmitting. Backend transaction changes are outside
+this frontend issue.
+
+Run the full suite:
+
+```sh
+npx tsc --noEmit
+npm run build
+node --test tests/login.test.mjs tests/register.test.mjs tests/routes.test.mjs tests/workouts.test.mjs tests/new-workout.test.mjs tests/workout-detail.test.mjs
+```
+
+Mocked detail tests cover GET/PUT/DELETE payloads and bearer authentication,
+ownership/malformed response rejection, set sorting, validation, not-found and
+expired sessions, missing configuration, delete cancellation, shared submission
+locking, stale request cancellation, and localized/accessibly labeled markup.
+Live read/edit/delete still need the team's credentials, running backend/database,
+and a team-approved test workout. No backend, database, or Supabase settings are
+changed, and no features from Issues #27–#29 are included.

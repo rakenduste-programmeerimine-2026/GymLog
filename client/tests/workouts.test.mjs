@@ -107,7 +107,7 @@ test('cancelled account request cannot publish stale data even if fetch ignores 
 
 test('content renders loading, empty, success, unauthenticated, and retry states', () => {
   const render = (state) => renderToStaticMarkup(createElement(WorkoutsContent, {
-    state, onRetry: () => {}, onLogin: () => {},
+    state, onRetry: () => {}, onLogin: () => {}, navigate: () => {},
   }))
   assert.match(render({ status: 'loading' }), /Laadin treeninguid/)
   assert.match(render({ status: 'success', workouts: [] }), /pole veel salvestatud/)
@@ -115,8 +115,8 @@ test('content renders loading, empty, success, unauthenticated, and retry states
   assert.match(success, /&lt;script&gt;/)
   assert.match(success, /18\. november 2026/)
   assert.match(success, /dateTime="2026-11-18"/)
-  assert.match(success, /detailvaade pole veel saadaval/)
-  assert.ok(!success.includes('href='))
+  assert.match(success, /Vaata treeningut/)
+  assert.match(success, /href="\/workouts\/w1"/)
   assert.match(render({ status: 'unauthenticated', message: 'Logi sisse.' }), /Logi uuesti sisse/)
   assert.match(render({ status: 'error', message: 'Viga.' }), /Proovi uuesti/)
 })
