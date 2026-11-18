@@ -79,11 +79,11 @@ test('protected content and login are not rendered during initial loading or red
   }
 })
 
-test('authenticated placeholders render navigation; a user without a session is not sufficient', () => {
+test('authenticated protected pages render navigation; a user without a session is not sufficient', () => {
   const user = { id: 'test-user' }
   for (const path of ['/workouts', '/exercises', '/stats']) {
     const html = render(path, { user, session: { user } })
-    assert.match(html, /Ajutine kohatäide/)
+    assert.match(html, path === '/workouts' ? /Minu treeningud/ : /Ajutine kohatäide/)
     assert.match(html, /aria-current="page"/)
     assert.ok(!html.includes('<form'))
     assert.match(render(path, { user }), /Suunan edasi/)
