@@ -60,4 +60,25 @@ async function getWorkouts(req, res) {
   return res.status(200).json(workouts);
 }
 
-module.exports = { createWorkout, getWorkouts };
+async function getWorkoutById(req, res) {
+  const supabase = createUserClient(req.token);
+
+  const { data: workout, error } = await supabase
+    .from("workouts")
+    .select("*, sets:workout_sets(*)")
+    .eq("id", req.params.id)
+    .eq("user_id", req.user.id)
+    .maybeSingle();
+
+  if (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (!workout) {
+    return res.status(404).json({ error: "Workout not found" });
+  }
+
+  return res.status(200).json(workout);
+}
+
+module.exports = { createWorkout, getWorkouts, getWorkoutById };
