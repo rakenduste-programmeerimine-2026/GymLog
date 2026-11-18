@@ -171,3 +171,33 @@ p {
   font-weight: 700;
   text-decoration-thickness: 3px;
 }
+
+.workouts-summary {
+  margin-bottom: 1rem;
+}
+
+.workouts-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.workout-card {
+  padding: 1rem;
+  border: 1px solid #747e6b;
+  border-radius: 0.5rem;
+  background: #1b2019;
+  overflow-wrap: anywhere;
+}
+
+.workout-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: #c6ff00;
+}
+
+.workout-detail-note {
+  margin-top: 0.75rem;
+}

@@ -162,8 +162,8 @@ configuration never grants access; public auth forms retain their setup message.
 Registration remains visible after automatic sign-in until the user continues,
 preserving Issue #22's confirmation/success feedback.
 
-The three protected pages are clearly labeled placeholders. No workout, exercise,
-or statistics features from Issues #24–#29 are implemented. Frontend route guards
+The exercises, statistics, and nested workout-detail routes remain clearly labeled
+placeholders. `/workouts` now displays the list described below. Frontend route guards
 are a UX measure: backend authorization and database policies remain responsible
 for protecting actual data.
 
@@ -181,3 +181,52 @@ push/replace behavior. Real session restoration and login redirects still requir
 the team's Supabase credentials and a test account. Production hosting must serve
 `index.html` for frontend paths such as `/workouts` on refresh/direct visits; Vite
 provides SPA fallback during local development. This change does not configure hosting.
+
+## Workouts list (Issue #24)
+
+Set the backend API base URL in ignored `client/.env.local` and restart Vite:
+
+```dotenv
+VITE_API_URL=http://localhost:3001
+```
+
+Use your actual backend address outside local development. This is separate from
+`VITE_SUPABASE_URL`. Missing/invalid API configuration produces a useful error;
+no demo workouts or anonymous request is substituted.
+
+`src/lib/api.ts` provides a small authenticated GET helper. It sends the current
+Supabase access token only in the `Authorization: Bearer` header, does not cache
+responses, and does not follow redirects. This is not a complete API client for
+Issue #20. Tokens are never placed in URLs, logs, or persistent application state.
+
+`src/lib/workouts.ts` reads the existing backend's `GET /workouts` array response:
+each row must contain `id`, `user_id`, and an ISO date (`YYYY-MM-DD`), with optional
+nullable `name`. Additional fields, including sets, are not retained by the list.
+The entire response is rejected if ownership does not match the current user,
+fields are malformed, or IDs are duplicated. The backend must still enforce user
+authorization and database access policies; frontend checks do not replace them.
+
+The list is newest first with localized Estonian dates. An absent or empty name
+is displayed as "Treening". Loading, empty history, network/API errors, and expired
+sessions have distinct feedback. Errors offer retry, and expired sessions offer
+sign-out followed by login with `/workouts` as the return destination. Requests
+are aborted/ignored on unmount, account changes, and token changes; previous-account
+results are never shown while the next user's request is loading.
+
+No detail view is implemented. Cards explicitly state that details are not yet
+available instead of linking to a placeholder as though it were functional.
+No new-workout form or sample production data is included.
+
+Run the full frontend checks without backend access or credentials:
+
+```sh
+npx tsc --noEmit
+npm run build
+node --test tests/login.test.mjs tests/register.test.mjs tests/routes.test.mjs tests/workouts.test.mjs
+```
+
+Mocked tests cover the token header, empty/success responses, date sorting,
+ownership rejection, malformed payloads, HTTP/network failures, cancellation,
+and rendered feedback. Live verification still needs the team's Supabase URL and
+public key, a test account, and a running authorized backend with its database
+configured. No backend or database setup is changed by this issue.
