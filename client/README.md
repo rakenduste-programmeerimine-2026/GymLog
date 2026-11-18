@@ -162,7 +162,7 @@ configuration never grants access; public auth forms retain their setup message.
 Registration remains visible after automatic sign-in until the user continues,
 preserving Issue #22's confirmation/success feedback.
 
-`/stats` displays the activity calendar; unimplemented nested statistics routes remain placeholders.
+`/stats` displays the activity calendar; `/stats/detail` opens the detailed statistics selector.
 `/workouts` displays the list and `/workouts/:id` the detail page. Frontend route guards
 are a UX measure: backend authorization and database policies remain responsible
 for protecting actual data.
@@ -458,3 +458,72 @@ years and century rules, week alignment, and accessible activity/today markers.
 Live verification still requires the team's Supabase credentials, API URL,
 authenticated test account, and configured backend/database. No dependencies or
 backend/database/Supabase settings are changed. Issue #29 is not implemented.
+
+## Detailed workout statistics (Issue #29)
+
+Use "Detailne statistika" on `/stats` to open `/stats/detail`, select an owned
+workout, and view `/stats/detail/:workoutId`. "Tagasi kalendrisse" returns to the
+calendar. These routes use the existing protected History API navigation with no
+new routing/chart dependencies.
+
+### Actual backend contract
+
+The issue's shorthand `GET /stats/detail` differs from the committed backend:
+`stats.routes.js` exposes **GET `/stats/detail/:workoutId`**, not a global aggregate
+endpoint. `getDetailStats` returns:
+
+```text
+{
+  workoutId, date, name, totalVolume,
+  exerciseTrends: { [exerciseName]: [{ date, weight, reps }, ...] },
+  comparison: null | {
+    previousWorkoutId, previousDate, previousVolume, volumeDifference
+  }
+}
+```
+
+The selector obtains owned workouts from existing authenticated `GET /workouts`.
+A detail request is made only for a valid ID present in that list. The backend
+also validates workout ownership and filters exercise history by the token's user.
+The aggregate response does not contain `user_id`; the frontend verifies the
+returned workout ID and data shape rather than inventing an ownership field.
+Backend authorization/RLS remain necessary. UI state is scoped to account, token,
+and selected workout, with cancelled/late requests ignored.
+
+### Display and data limits
+
+- Total volume is the backend's selected-workout sum of weight × repetitions over
+  its sets, displayed as kg × repetitions; it is not an all-time total.
+- Comparison uses the backend's previous workout with the same name and earlier
+  date. It shows previous date/volume and the supplied signed volume difference.
+  Null comparison means no previous comparable workout. No percentage is derived.
+- Per-exercise tables show date, weight, and repetitions for each returned history
+  row. Duplicate dates remain separate rows. Backend history includes all dates,
+  potentially later than the selected workout; the UI explains this. It does not
+  silently aggregate rows, calculate personal records, or restrict the period.
+- Nullable weight/repetitions display "Andmed puuduvad". Zero is shown as zero.
+  Empty exercise histories and completely empty trends have explicit messages.
+
+Tables use captions and scoped row/column headers, wrap at mobile widths, and
+retain the existing dark Neon Lime design. All labels and date/number formatting
+are Estonian. The earlier detail wireframe describes workout sets rather than
+advanced stats, so no extra response fields are inferred from it.
+
+Loading, no workouts, unselected/missing workout, API/network errors, expired
+session, missing API configuration, and malformed statistics are handled without
+demo data or fake success. Retry and login actions use the existing patterns.
+
+Run all checks without real credentials/backend access:
+
+```sh
+npx tsc --noEmit
+npm run build
+node --test tests/login.test.mjs tests/register.test.mjs tests/routes.test.mjs tests/workouts.test.mjs tests/new-workout.test.mjs tests/workout-detail.test.mjs tests/exercises.test.mjs tests/calendar.test.mjs tests/stats-detail.test.mjs
+```
+
+Mocked stats tests cover the exact route/header, response validation, empty trends,
+missing/zero values, multiple rows per day, negative/zero comparison differences,
+invalid IDs, configuration/auth errors, not-found, cancellation, accessible tables,
+and protected-route behavior. Live verification still needs the team's credentials,
+configured API/backend/database, and owned workouts with enough history for a
+comparison. No backend/database/Supabase settings or dependencies are changed.

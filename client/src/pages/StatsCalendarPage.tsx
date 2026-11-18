@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import ProtectedNavigation from '../components/ProtectedNavigation'
 import WorkoutCalendar from '../components/WorkoutCalendar'
+import RouteLink from '../components/RouteLink'
 import { useAuth } from '../context/AuthContext'
 import { localToday, monthLabel, shiftMonth, startCalendarRequest } from '../lib/calendar'
 import type { CalendarState } from '../lib/calendar'
@@ -70,6 +71,7 @@ export default function StatsCalendarPage({ navigate }: { navigate: Navigate }) 
       <ProtectedNavigation navigate={navigate} current="/stats" />
       <main aria-labelledby="calendar-title">
         <h1 id="calendar-title">Treeningukalender</h1>
+        <RouteLink href="/stats/detail" navigate={navigate}>Detailne statistika →</RouteLink>
         <div className="calendar-controls">
           <button className="calendar-month-button" aria-label="Eelmine kuu" disabled={!previous}
             onClick={() => previous && changeMonth(previous)}>‹</button>

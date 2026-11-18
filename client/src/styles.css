@@ -400,3 +400,54 @@ p {
   font-size: 0.875rem;
   margin-bottom: 1rem;
 }
+
+.stats-section, .stats-selector {
+  margin-top: 1.5rem;
+}
+
+.stats-volume {
+  color: #c6ff00;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stats-comparison {
+  display: grid;
+  gap: 1rem;
+}
+
+.stats-comparison dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.stats-exercise {
+  margin-top: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+.stats-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.stats-table caption {
+  color: #c6ff00;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-align: left;
+  padding-bottom: 0.75rem;
+}
+
+.stats-table th, .stats-table td {
+  padding: 0.5rem 0.25rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #747e6b;
+  overflow-wrap: anywhere;
+}
+
+.stats-table thead {
+  background: #1b2019;
+}
