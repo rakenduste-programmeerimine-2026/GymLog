@@ -154,3 +154,20 @@ p {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.protected-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.protected-navigation a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.protected-navigation [aria-current="page"] {
+  font-weight: 700;
+  text-decoration-thickness: 3px;
+}
