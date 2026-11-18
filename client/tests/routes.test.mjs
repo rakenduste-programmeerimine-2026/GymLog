@@ -83,7 +83,7 @@ test('authenticated protected pages render navigation; a user without a session 
   const user = { id: 'test-user' }
   for (const path of ['/workouts', '/exercises', '/stats']) {
     const html = render(path, { user, session: { user } })
-    assert.match(html, path === '/workouts' ? /Minu treeningud/ : path === '/exercises' ? /Lisa isiklik harjutus/ : /Ajutine kohatäide/)
+    assert.match(html, path === '/workouts' ? /Minu treeningud/ : path === '/exercises' ? /Lisa isiklik harjutus/ : /Treeningukalender/)
     assert.match(html, /aria-current="page"/)
     assert.equal(html.includes('<form'), path === '/exercises')
     assert.match(render(path, { user }), /Suunan edasi/)
