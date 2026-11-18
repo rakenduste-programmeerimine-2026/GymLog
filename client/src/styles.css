@@ -47,3 +47,87 @@ p {
   margin: 0;
   color: #b6bdae;
 }
+
+.login-page {
+  max-width: 30rem;
+}
+
+.login-intro {
+  margin-bottom: 2rem;
+}
+
+.login-field {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.login-field label {
+  font-weight: 600;
+}
+
+.login-field input,
+.login-submit {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #747e6b;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font: inherit;
+}
+
+.login-field input {
+  min-width: 0;
+  color: #f2f5ed;
+  background: #1b2019;
+}
+
+.login-field input[aria-invalid="true"] {
+  border-color: #ffb4ab;
+}
+
+.login-submit {
+  margin-top: 0.75rem;
+  color: #101210;
+  background: #c6ff00;
+  border-color: #c6ff00;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.login-submit:hover:not(:disabled) {
+  background: #d7ff57;
+}
+
+.login-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.login-field input:focus-visible,
+.login-submit:focus-visible,
+.login-error:focus-visible {
+  outline: 3px solid #c6ff00;
+  outline-offset: 3px;
+}
+
+.login-error {
+  color: #ffb4ab;
+  overflow-wrap: anywhere;
+}
+
+.login-notice {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #747e6b;
+  border-radius: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.login-progress {
+  margin-top: 0.75rem;
+}
+
+.login-registration {
+  margin-top: 1.5rem;
+}

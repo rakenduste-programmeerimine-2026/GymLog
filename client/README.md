@@ -72,3 +72,30 @@ Login and registration screens are not part of this issue.
 
 Real network authentication remains unverified until the URL, public key, and a
 test account are available. Do not use invented credentials to simulate success.
+
+## Login page (Issue #21)
+
+Unauthenticated users see the Estonian login form. It validates required fields
+and email format, then calls the existing client's `auth.signInWithPassword()`.
+The submit button is disabled while checking the session, sending a request, or
+when Supabase configuration is unavailable. Successful authentication updates
+`AuthContext`, and the application shows the existing home page.
+
+Invalid credentials use one shared message for unknown accounts and wrong
+passwords. Network/service failures, unconfirmed email, and rate limiting have
+safe messages; raw server errors and credentials are never displayed or logged.
+Passwords are not trimmed and no registration password policy is imposed at login.
+
+There is currently no router or registration screen. The page explains that
+registration is not yet available; it does not link to an unimplemented route.
+
+Checks from `client/`:
+
+```sh
+npx tsc --noEmit
+npm run build
+node --test tests/login.test.mjs
+```
+
+Real sign-in, restored sessions, and network-failure browser behavior still need
+verification with the team's Supabase URL, public key, and test account.
