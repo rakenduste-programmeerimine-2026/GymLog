@@ -1,5 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middleware/auth.middleware");
+const asyncHandler = require("../middleware/asyncHandler");
 const {
   getExercises,
   createExercise,
@@ -7,9 +8,9 @@ const {
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(asyncHandler(authMiddleware));
 
-router.get("/", getExercises);
-router.post("/", createExercise);
+router.get("/", asyncHandler(getExercises));
+router.post("/", asyncHandler(createExercise));
 
 module.exports = router;

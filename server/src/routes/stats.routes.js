@@ -1,5 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middleware/auth.middleware");
+const asyncHandler = require("../middleware/asyncHandler");
 const {
   getCalendarStats,
   getDetailStats,
@@ -7,9 +8,9 @@ const {
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(asyncHandler(authMiddleware));
 
-router.get("/calendar", getCalendarStats);
-router.get("/detail/:workoutId", getDetailStats);
+router.get("/calendar", asyncHandler(getCalendarStats));
+router.get("/detail/:workoutId", asyncHandler(getDetailStats));
 
 module.exports = router;
