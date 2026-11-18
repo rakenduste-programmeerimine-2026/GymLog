@@ -8,6 +8,7 @@ import NewWorkoutPage from './pages/NewWorkoutPage'
 import WorkoutDetailPage from './pages/WorkoutDetailPage'
 import ExercisesPage from './pages/ExercisesPage'
 import StatsCalendarPage from './pages/StatsCalendarPage'
+import StatsDetailPage from './pages/StatsDetailPage'
 import ProtectedNavigation from './components/ProtectedNavigation'
 import Header from './components/Header'
 import RouteLink from './components/RouteLink'
@@ -31,6 +32,9 @@ export function AppRoutes({ path, navigate }: { path: string; navigate: Navigate
   const location = new URL(path, 'https://gymlog.invalid')
   const pathname = location.pathname.replace(/\/$/, '')
   const detailMatch = /^\/workouts\/([^/]+)$/.exec(pathname)
+  const statsMatch = /^\/stats\/detail(?:\/([^/]+))?$/.exec(pathname)
+  let statsWorkoutId: string | null = null
+  try { statsWorkoutId = statsMatch?.[1] ? decodeURIComponent(statsMatch[1]) : null } catch { statsWorkoutId = '' }
   let workoutId = ''
   try { workoutId = detailMatch ? decodeURIComponent(detailMatch[1]) : '' } catch { /* Invalid ID is shown by the detail page. */ }
 
@@ -78,6 +82,8 @@ export function AppRoutes({ path, navigate }: { path: string; navigate: Navigate
           <ExercisesPage key={user?.id} navigate={navigate} />
         ) : pathname === '/stats' ? (
           <StatsCalendarPage key={user?.id} navigate={navigate} />
+        ) : statsMatch ? (
+          <StatsDetailPage key={user?.id} id={statsWorkoutId} navigate={navigate} />
         ) : (
           <ProtectedPlaceholderPage path={route.path} navigate={navigate} />
         )
