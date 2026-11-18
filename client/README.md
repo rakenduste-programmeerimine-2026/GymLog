@@ -58,7 +58,7 @@ failures also produce a safe message without displaying configuration values.
 
 The provider unsubscribes on unmount and ignores late session reads. Session data
 is for frontend UI state; backend authorization must still validate access tokens.
-Login and registration screens are not part of this issue.
+Login and registration screens use this provider in their separate frontend issues.
 
 ### Connection verification once credentials are available
 
@@ -86,8 +86,8 @@ passwords. Network/service failures, unconfirmed email, and rate limiting have
 safe messages; raw server errors and credentials are never displayed or logged.
 Passwords are not trimmed and no registration password policy is imposed at login.
 
-There is currently no router or registration screen. The page explains that
-registration is not yet available; it does not link to an unimplemented route.
+Login and registration navigation uses local application state rather than a
+router dependency. The login page's "Loo konto" button opens registration.
 
 Checks from `client/`:
 
@@ -99,3 +99,44 @@ node --test tests/login.test.mjs
 
 Real sign-in, restored sessions, and network-failure browser behavior still need
 verification with the team's Supabase URL, public key, and test account.
+
+## Registration page (Issue #22)
+
+The Estonian registration form reuses login styling and email/required-field
+validation. It requires a password of at least eight characters and an exact
+confirmation match; passwords are never trimmed. This is a frontend minimum,
+not a change to the project's Supabase password policy. A stricter server policy
+is handled through a safe error message.
+
+The existing client calls `auth.signUp({ email, password })` with no profile data
+or database writes. Inputs, navigation, and submission are disabled during the
+request, with a pending indicator and duplicate-submission guard. Missing
+configuration disables submission and shows setup guidance.
+
+- With a returned session: show account-created feedback and a button to continue
+  to the home page. `AuthContext` supplies the authenticated user.
+- Without a session: explain email confirmation and provide a return to login.
+  This message does not guarantee a new account or email was created, because
+  Supabase can obscure duplicate-account responses. The frontend does not infer
+  authentication from a returned user alone.
+
+Registration stays visible until the user continues, even if an auth event arrives
+before the request finishes. Login and registration buttons work in both
+directions without new routes. Reloading starts at the normal app entry point.
+Error messages cover network failures, weak passwords, rate limits, unavailable
+services, and disabled sign-up without displaying raw server messages.
+
+Run all auth tests with the existing Node/Vite setup:
+
+```sh
+node --test tests/login.test.mjs tests/register.test.mjs
+npx tsc --noEmit
+npm run build
+```
+
+Tests cover validation, request payloads, confirmation/session outcomes, submission
+state transitions, safe errors, missing configuration, and accessible form markup.
+Real account creation and email delivery still require the team's project URL,
+public publishable key, configured email/password Auth, allowed redirect URLs, and
+confirmation policy. These checks must be done against a team-approved test project;
+no Supabase server settings are changed by this frontend.

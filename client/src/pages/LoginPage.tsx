@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { loginErrorMessage, validateLogin } from '../lib/login'
 import type { LoginErrors } from '../lib/login'
 
-export default function LoginPage() {
+export default function LoginPage({ onRegister }: { onRegister: () => void }) {
   const { loading, configurationError, error: sessionError } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -108,7 +108,12 @@ export default function LoginPage() {
           </p>
         </form>
 
-        <p className="login-registration">Pole veel kontot? Registreerimisleht pole veel saadaval.</p>
+        <p className="login-registration">
+          Pole veel kontot?{' '}
+          <button className="auth-navigation" type="button" onClick={onRegister} disabled={submitting}>
+            Loo konto
+          </button>
+        </p>
       </main>
     </div>
   )
