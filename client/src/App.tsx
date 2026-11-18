@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ProtectedPlaceholderPage from './pages/ProtectedPlaceholderPage'
 import WorkoutsPage from './pages/WorkoutsPage'
+import NewWorkoutPage from './pages/NewWorkoutPage'
 import ProtectedNavigation from './components/ProtectedNavigation'
 import Header from './components/Header'
 import RouteLink from './components/RouteLink'
@@ -24,6 +25,8 @@ export function AppRoutes({ path, navigate }: { path: string; navigate: Navigate
     authenticated: Boolean(user && session && !configurationError),
   })
   const redirectTo = route.kind === 'redirect' ? route.to : null
+  const location = new URL(path, 'https://gymlog.invalid')
+  const pathname = location.pathname.replace(/\/$/, '')
 
   useEffect(() => {
     if (redirectTo) navigate(redirectTo, true)
@@ -58,8 +61,10 @@ export function AppRoutes({ path, navigate }: { path: string; navigate: Navigate
   return (
     <>
       {route.kind === 'protected' ? (
-        route.path === '/workouts' && new URL(path, 'https://gymlog.invalid').pathname.replace(/\/$/, '') === '/workouts' ? (
-          <WorkoutsPage key={user?.id} navigate={navigate} />
+        pathname === '/workouts/new' ? (
+          <NewWorkoutPage key={user?.id} navigate={navigate} />
+        ) : route.path === '/workouts' && pathname === '/workouts' ? (
+          <WorkoutsPage key={user?.id} navigate={navigate} createdId={location.searchParams.get('created')} />
         ) : (
           <ProtectedPlaceholderPage path={route.path} navigate={navigate} />
         )
