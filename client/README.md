@@ -86,8 +86,8 @@ passwords. Network/service failures, unconfirmed email, and rate limiting have
 safe messages; raw server errors and credentials are never displayed or logged.
 Passwords are not trimmed and no registration password policy is imposed at login.
 
-Login and registration navigation uses local application state rather than a
-router dependency. The login page's "Loo konto" button opens registration.
+Login and registration navigation uses the browser History API without a router
+dependency. The login page's "Loo konto" button opens `/register`.
 
 Checks from `client/`:
 
@@ -122,7 +122,7 @@ configuration disables submission and shows setup guidance.
 
 Registration stays visible until the user continues, even if an auth event arrives
 before the request finishes. Login and registration buttons work in both
-directions without new routes. Reloading starts at the normal app entry point.
+directions using the auth routes described below.
 Error messages cover network failures, weak passwords, rate limits, unavailable
 services, and disabled sign-up without displaying raw server messages.
 
@@ -140,3 +140,44 @@ Real account creation and email delivery still require the team's project URL,
 public publishable key, configured email/password Auth, allowed redirect URLs, and
 confirmation policy. These checks must be done against a team-approved test project;
 no Supabase server settings are changed by this frontend.
+
+## Protected routes (Issue #23)
+
+The small navigation adapter in `src/lib/navigation.ts` uses `pushState`,
+`replaceState`, and `popstate`, with no additional dependencies. `/login` and
+`/register` are public. The root keeps the existing login/home entry behavior.
+Browser back/forward and direct URL navigation use the same route decisions.
+
+`/workouts`, `/exercises`, `/stats`, and their nested paths require a user and
+session from `AuthContext`. During initial session loading, show an Estonian
+loading message without rendering a protected page or redirecting. Once loading
+finishes, logged-out visitors are redirected with history replacement to
+`/login?next=...`. A successful sign-in returns to that protected destination,
+including its query parameters. Public auth navigation preserves `next` in both
+directions. Without a destination, login returns to `/workouts`.
+
+Only known same-origin protected paths are accepted as return destinations;
+external URLs, auth routes, and URL fragments are discarded. Missing Supabase
+configuration never grants access; public auth forms retain their setup message.
+Registration remains visible after automatic sign-in until the user continues,
+preserving Issue #22's confirmation/success feedback.
+
+The three protected pages are clearly labeled placeholders. No workout, exercise,
+or statistics features from Issues #24–#29 are implemented. Frontend route guards
+are a UX measure: backend authorization and database policies remain responsible
+for protecting actual data.
+
+Run all frontend tests and checks:
+
+```sh
+node --test tests/login.test.mjs tests/register.test.mjs tests/routes.test.mjs
+npx tsc --noEmit
+npm run build
+```
+
+Route tests cover logged-out redirects, retained destinations, authenticated access,
+initial loading, public forms, missing configuration, safe return URLs, and history
+push/replace behavior. Real session restoration and login redirects still require
+the team's Supabase credentials and a test account. Production hosting must serve
+`index.html` for frontend paths such as `/workouts` on refresh/direct visits; Vite
+provides SPA fallback during local development. This change does not configure hosting.
